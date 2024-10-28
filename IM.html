@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/> <!-- Viewport for mobile -->
+    <title>Insta Millionaire</title>
+    <!-- Include Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000000; /* Background color */
+            color: #ffffff; /* Text color */
+            display: flex; /* Use Flexbox */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            height: 100vh; /* Full height of the viewport */
+            margin: 0; /* Remove default margin */
+        }
+        #main-audio-player {
+            padding: 0; /* Padding inside the player */
+            box-sizing: border-box;
+            text-align: center; /* Center text */
+        }
+        #audio-player {
+         
+        }
+        #player-controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        button, select {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #ffffff; /* Button text color */
+        }
+        button .material-icons {
+            font-size: 26px;
+            color: #ffffff; /* Icon color */
+        }
+        #current-track {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff; /* Current track color */
+        }
+        select {
+            background-color: #000000; /* Dropdown background color */
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            color: #ffffff; /* Dropdown text color */
+        }
+        select option {
+            background: #000000; /* Dropdown option background */
+            color: #ffffff; /* Dropdown option text color */
+        }
+    </style>
+</head>
+<body>
+<div id="main-audio-player">
+    <h2>Insta Millionaire</h2>
+    <audio id="audio-player" controls>
+        Your browser does not support the audio element.
+    </audio>
+    <div id="player-controls">
+        <button onclick="previousTrack()"><span class="material-icons">skip_previous</span></button>
+        <button onclick="playPause()"><span id="play-pause-icon" class="material-icons">play_arrow</span></button>
+        <button onclick="nextTrack()"><span class="material-icons">skip_next</span></button>
+        <select id="episode-selector" onchange="selectTrack(this.value)">
+            <!-- Dropdown will be populated dynamically -->
+        </select>
+    </div>
+    <div id="current-track">Current Episode: </div>
+
+    <script>
+        // Dynamically generate array of audio files with specific links for first two
+        const audioFiles = [
+            { url: "https://github.com/ameerzada2000/im1440/raw/main/IM%20EP1.mp3", name: "IM EP1" },
+            { url: "https://github.com/ameerzada2000/im1440/raw/main/IM%20EP2.mp3", name: "IM EP2" }
+        ];
+
+        // Adding the rest of the files (3 to 1440)
+        for (let i = 3; i <= 1440; i++) {
+            audioFiles.push({ url: `https://github.com/ameerzada2000/im1440/raw/main/${i}.mp3`, name: `Episode ${i}` });
+        }
+
+        let currentIndex = 0;
+        const audioPlayer = document.getElementById('audio-player');
+        const currentTrackDisplay = document.getElementById('current-track');
+        const episodeSelector = document.getElementById('episode-selector');
+        const playPauseIcon = document.getElementById('play-pause-icon');
+
+        // Populate dropdown with episode names
+        audioFiles.forEach((file, index) => {
+            const option = document.createElement("option");
+            option.value = index;
+            option.textContent = file.name;
+            episodeSelector.appendChild(option);
+        });
+
+        // Function to load and play current track
+        function loadTrack(index) {
+            if (index >= 0 && index < audioFiles.length) {
+                currentIndex = index;
+                audioPlayer.src = audioFiles[index].url;
+                audioPlayer.play();
+                currentTrackDisplay.textContent = `Current Episode: ${audioFiles[index].name}`;
+                episodeSelector.value = index;
+
+                // Save the current state to localStorage
+                saveCurrentState();
+            }
+        }
+
+        // Function to save the current state (index and time) to localStorage
+        function saveCurrentState() {
+            localStorage.setItem("currentIndex", currentIndex);
+            localStorage.setItem("currentTime", audioPlayer.currentTime);
+        }
+
+        // Function to play or pause the audio
+        function playPause() {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playPauseIcon.textContent = "pause";
+            } else {
+                audioPlayer.pause();
+                playPauseIcon.textContent = "play_arrow";
+            }
+        }
+
+        // Function to play the next track
+        function nextTrack() {
+            currentIndex = (currentIndex + 1) % audioFiles.length;
+            loadTrack(currentIndex);
+        }
+
+        // Function to play the previous track
+        function previousTrack() {
+            currentIndex = (currentIndex - 1 + audioFiles.length) % audioFiles.length;
+            loadTrack(currentIndex);
+        }
+
+        // Function to select track from dropdown
+        function selectTrack(index) {
+            loadTrack(parseInt(index, 10));
+        }
+
+        // Automatically play the first track or resume the last track on page load
+        window.onload = () => {
+            const savedIndex = localStorage.getItem("currentIndex");
+            const savedTime = localStorage.getItem("currentTime");
+
+            if (savedIndex !== null) {
+                loadTrack(parseInt(savedIndex, 10));
+                if (savedTime !== null) {
+                    audioPlayer.currentTime = parseFloat(savedTime);
+                }
+            } else {
+                loadTrack(currentIndex);
+            }
+        };
+
+        // Save the current time before the page unloads
+        window.onbeforeunload = () => {
+            saveCurrentState();
+        };
+
+        // Play next track when the current one ends
+        audioPlayer.addEventListener('ended', nextTrack);
+
+        // Update current time periodically while the audio is playing
+        audioPlayer.addEventListener('timeupdate', () => {
+            saveCurrentState();
+        });
+    </script>
+</div>
+</body>
+</html>
